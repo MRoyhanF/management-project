@@ -19,8 +19,8 @@ $result = $conn->query("SELECT * FROM users");
 
 <body class="p-8">
     <h1 class="text-2xl font-bold mb-4">Daftar User</h1>
-    <a href="../admin.php" class="bg-green-600 text-white px-4 py-2 rounded mb-4 inline-block">Dashboard</a>
-    <a href="create.php" class="bg-blue-600 text-white px-4 py-2 rounded mb-4 inline-block">+ Tambah User</a>
+    <a href="../admin.php" class="bg-green-600 hover:bg-green-800 text-white px-4 py-2 rounded mb-4 inline-block">← Kembali ke Dashboard</a>
+    <a href="create.php" class="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded mb-4 inline-block">+ Tambah User</a>
 
     <table class="w-full border border-gray-300">
         <thead>
@@ -40,8 +40,8 @@ $result = $conn->query("SELECT * FROM users");
                     <td class="p-2 border"><?= htmlspecialchars($row['nama_lengkap']) ?></td>
                     <td class="p-2 border"><?= $row['role'] ?></td>
                     <td class="p-2 border">
-                        <a href="edit.php?id=<?= $row['id_user'] ?>" class="text-blue-600">Edit</a> |
-                        <a href="delete.php?id=<?= $row['id_user'] ?>" class="text-red-600" onclick="return confirm('Yakin ingin menghapus?')">Hapus</a>
+                        <a href="edit.php?id=<?= $row['id_user'] ?>" class="text-sm hover:text-gray-50 bg-yellow-400 hover:bg-yellow-600 px-2 py-1 rounded-lg shadow">Edit</a>
+                        <a href="delete.php?id=<?= $row['id_user'] ?>" class="text-sm hover:text-gray-50 bg-red-400 hover:bg-red-600 px-2 py-1 rounded-lg shadow" onclick="return confirm('Yakin ingin menghapus?')">Hapus</a>
                     </td>
                 </tr>
             <?php endwhile; ?>
