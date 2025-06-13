@@ -30,10 +30,20 @@ $progress = $conn->query("
 ")->fetch_assoc()['rata'] ?? 0;
 
 $navItems = [
-    ['label' => 'Proyek', 'href' => './projects/'],
+    ['label' => 'Proyek ku', 'href' => './projects/'],
     ['label' => 'Tugas', 'href' => './tasks/'],
     ['label' => 'Penugasan', 'href' => './assignments/'],
 ];
+
+// Ambil tugas-tugas terbaru milik manager
+$tugas_terbaru = $conn->query("
+    SELECT t.*, p.nama_project 
+    FROM tasks t
+    JOIN projects p ON t.id_project = p.id_project
+    WHERE p.id_manager = $id_manager
+    ORDER BY t.deadline_task ASC
+    LIMIT 5
+");
 ?>
 
 <!DOCTYPE html>
@@ -41,70 +51,129 @@ $navItems = [
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Management Projects</title>
-    <style>
-        [x-cloak] {
-            display: none
-        }
-    </style>
     <script src="https://unpkg.com/alpinejs"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="bg-gray-200">
-    <!-- Navbar Section -->
-    <section class="relative w-full px-8 text-gray-700 bg-white body-font" data-tails-scripts="//unpkg.com/alpinejs" {!! $attributes ?? '' !!}>
+    <!-- Navbar -->
+    <section class="relative w-full px-8 text-gray-700 bg-white body-font">
         <div class="container flex flex-col flex-wrap items-center justify-between py-2 mx-auto md:flex-row max-w-7xl">
-            <a href="#_" class="relative z-10 flex items-center w-auto text-2xl font-extrabold leading-none text-black select-none">TaskApp</a>
-            <nav class="top-0 left-0 z-0 flex items-center justify-center w-full h-full py-5 -ml-0 space-x-5 text-base md:-ml-5 md:py-0 md:absolute">
+            <a href="#_" class="text-2xl font-extrabold text-black">TaskApp</a>
+            <nav class="flex items-center justify-center space-x-5 text-base">
                 <?php foreach ($navItems as $item): ?>
-                    <a href="<?= htmlspecialchars($item['href']) ?>" class="relative font-medium leading-6 text-gray-600 transition duration-150 ease-out hover:text-gray-900"
-                        x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false">
-                        <span class="block"><?= htmlspecialchars($item['label']) ?></span>
-                        <span class="absolute bottom-0 left-0 inline-block w-full h-0.5 -mb-1 overflow-hidden">
-                            <span x-show="hover" class="absolute inset-0 inline-block w-full h-1 h-full transform bg-gray-900"
-                                x-transition:enter="transition ease duration-200"
-                                x-transition:enter-start="scale-0"
-                                x-transition:enter-end="scale-100"
-                                x-transition:leave="transition ease-out duration-300"
-                                x-transition:leave-start="scale-100"
-                                x-transition:leave-end="scale-0">
-                            </span>
-                        </span>
+                    <a href="<?= htmlspecialchars($item['href']) ?>" class="font-medium text-gray-600 hover:text-gray-900">
+                        <?= htmlspecialchars($item['label']) ?>
                     </a>
                 <?php endforeach; ?>
             </nav>
-            <div class="relative z-10 inline-flex items-center space-x-3 md:ml-5 lg:justify-end">
-                <span class="inline-flex rounded-md shadow-sm">
-                    <a href="../logout.php" class="inline-flex items-center justify-center px-4 py-2 text-base font-medium leading-6 text-white whitespace-no-wrap bg-blue-600 border border-blue-700 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" data-rounded="rounded-md" data-primary="blue-600">
-                        logOut
-                    </a>
-                </span>
-            </div>
+            <a href="../logout.php" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">Logout</a>
         </div>
     </section>
-    <h1 class="text-2xl font-bold mb-4">Selamat datang, <?= htmlspecialchars($_SESSION['nama_lengkap']) ?> (Manager)</h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="p-4 bg-white shadow rounded border">
-            <p class="text-gray-600">Proyek Anda</p>
-            <p class="text-xl font-bold"><?= $projects ?></p>
+    <!-- Dashboard -->
+    <div class="w-full max-w-7xl mx-auto px-6 mt-6">
+        <h1 class="text-2xl font-bold mb-4">Selamat datang, <?= htmlspecialchars($_SESSION['nama_lengkap']) ?> (Manager)</h1>
+
+        <!-- Statistik -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="p-4 bg-white shadow rounded border">
+                <p class="text-gray-600">Proyek Anda</p>
+                <p class="text-xl font-bold"><?= $projects ?></p>
+            </div>
+            <div class="p-4 bg-white shadow rounded border">
+                <p class="text-gray-600">Total Tugas</p>
+                <p class="text-xl font-bold"><?= $tasks ?></p>
+            </div>
+            <div class="p-4 bg-white shadow rounded border">
+                <p class="text-gray-600">Anggota Dilibatkan</p>
+                <p class="text-xl font-bold"><?= $assignments ?></p>
+            </div>
+            <div class="p-4 bg-white shadow rounded border">
+                <p class="text-gray-600">Rata-rata Progres</p>
+                <p class="text-xl font-bold"><?= $progress ?>%</p>
+            </div>
         </div>
-        <div class="p-4 bg-white shadow rounded border">
-            <p class="text-gray-600">Total Tugas</p>
-            <p class="text-xl font-bold"><?= $tasks ?></p>
+
+        <!-- Card Tugas Terbaru -->
+        <h2 class="text-xl font-semibold mb-3">Tugas Terbaru</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <?php while ($row = $tugas_terbaru->fetch_assoc()): ?>
+                <div class="bg-white p-4 rounded shadow border flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-blue-700"><?= htmlspecialchars($row['judul_task']) ?></h3>
+                        <p class="text-sm text-gray-500 mb-2"><?= htmlspecialchars($row['nama_project']) ?></p>
+                        <p class="text-sm text-gray-500 mb-1">Deadline: <?= htmlspecialchars($row['deadline_task']) ?></p>
+                        <p class="text-sm text-gray-600 mb-2">Status: <span class="font-medium"><?= htmlspecialchars($row['status']) ?></span></p>
+                        <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                            <div class="bg-blue-600 h-3 rounded-full" style="width: <?= (int)$row['progress'] ?>%"></div>
+                        </div>
+                    </div>
+                    <?php if (!empty($row['file'])): ?>
+                        <a href="./../uploads/tasks/<?= htmlspecialchars($row['file']) ?>" target="_blank" class="text-blue-600 hover:underline mt-2 text-sm">Lihat File</a>
+                    <?php else: ?>
+                        <span class="text-gray-400 text-sm italic mt-2">Tidak ada file</span>
+                    <?php endif; ?>
+                </div>
+            <?php endwhile; ?>
         </div>
-        <div class="p-4 bg-white shadow rounded border">
-            <p class="text-gray-600">Anggota Dilibatkan</p>
-            <p class="text-xl font-bold"><?= $assignments ?></p>
-        </div>
-        <div class="p-4 bg-white shadow rounded border">
-            <p class="text-gray-600">Rata-rata Progres</p>
-            <p class="text-xl font-bold"><?= $progress ?>%</p>
+        <div class="w-auto mx-32 mt-6 p-6 bg-white rounded shadow border">
+            <h2 class="text-xl font-semibold mb-4">Statistik Visual</h2>
+            <canvas id="dashboardChart" class="w-full h-64"></canvas>
         </div>
     </div>
+    <!-- chart section -->
+
+    <script>
+        const ctx = document.getElementById('dashboardChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Proyek', 'Tugas', 'Anggota', 'Rata-rata Progres'],
+                datasets: [{
+                    label: 'Statistik Manager',
+                    data: [
+                        <?= json_encode((int) $projects) ?>,
+                        <?= json_encode((int) $tasks) ?>,
+                        <?= json_encode((int) $assignments) ?>,
+                        <?= json_encode((float) $progress) ?>
+                    ],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(34, 197, 94, 0.7)',
+                        'rgba(234, 179, 8, 0.7)',
+                        'rgba(239, 68, 68, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(234, 179, 8, 1)',
+                        'rgba(239, 68, 68, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
 </body>
 
 </html>

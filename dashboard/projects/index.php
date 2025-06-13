@@ -34,8 +34,10 @@ $projects = $stmt->get_result();
 
 <body class="p-8">
     <h1 class="text-2xl font-bold mb-4">Manajemen Proyek</h1>
-    <a href="../admin.php" class="bg-green-600 text-white px-4 py-2 rounded mb-4 inline-block">Dashboard</a>
-    <a href="create.php" class="bg-blue-600 text-white px-4 py-2 rounded mb-4 inline-block">+ Tambah Proyek</a>
+    <a href="../admin.php" class="bg-green-600 hover:bg-green-800 text-white px-4 py-2 rounded mb-4 inline-block">← Kembali ke Dashboard</a>
+    <?php if ($role === 'admin'): ?>
+        <a href="create.php" class="bg-blue-600 text-white px-4 py-2 rounded mb-4 inline-block">+ Tambah Proyek</a>
+    <?php endif; ?>
     <table class="w-full border">
         <thead>
             <tr class="bg-gray-100">
@@ -45,7 +47,9 @@ $projects = $stmt->get_result();
                 <th class="border p-2">Tanggal Mulai</th>
                 <th class="border p-2">Deadline</th>
                 <th class="border p-2">Manager</th>
-                <th class="border p-2">Aksi</th>
+                <?php if ($role === 'admin'): ?>
+                    <th class="border p-2">Aksi</th>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
@@ -57,10 +61,12 @@ $projects = $stmt->get_result();
                     <td class="border p-2"><?= $p['tanggal_mulai'] ?></td>
                     <td class="border p-2"><?= $p['tanggal_deadline'] ?></td>
                     <td class="border p-2"><?= htmlspecialchars($p['nama_manager']) ?></td>
-                    <td class="border p-2">
-                        <a href="edit.php?id=<?= $p['id_project'] ?>" class="text-blue-600">Edit</a> |
-                        <a href="delete.php?id=<?= $p['id_project'] ?>" onclick="return confirm('Yakin ingin hapus?')" class="text-red-600">Hapus</a>
-                    </td>
+                    <?php if ($role === 'admin'): ?>
+                        <td class="border p-2">
+                            <a href="edit.php?id=<?= $p['id_project'] ?>" class="text-sm hover:text-gray-50 bg-yellow-400 hover:bg-yellow-600 px-2 py-1 rounded-lg shadow">Edit</a>
+                            <a href="delete.php?id=<?= $p['id_project'] ?>" onclick="return confirm('Yakin ingin hapus?')" class="text-sm hover:text-gray-50 bg-red-400 hover:bg-red-600 px-2 py-1 rounded-lg shadow">Hapus</a>
+                        </td>
+                    <?php endif; ?>
                 </tr>
             <?php endwhile ?>
         </tbody>
