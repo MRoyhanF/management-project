@@ -27,6 +27,7 @@ CREATE TABLE tasks (
     deadline_task DATE,
     status ENUM('belum mulai', 'proses', 'selesai') DEFAULT 'belum mulai',
     progress INT DEFAULT 0,
+    file VARCHAR(250) NULL,
     FOREIGN KEY (id_project) REFERENCES projects(id_project) ON DELETE CASCADE
 );
 

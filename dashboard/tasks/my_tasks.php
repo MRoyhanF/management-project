@@ -9,12 +9,10 @@ require_once '../../config/db.php';
 
 $id_user = $_SESSION['id_user'];
 
-// Handle update progress
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress'])) {
     $progress = max(0, min(100, intval($_POST['progress'])));
     $id_task = intval($_POST['id_task']);
 
-    // Pastikan user memang ditugaskan ke task ini
     $stmt = $conn->prepare("SELECT 1 FROM task_assignments WHERE id_task = ? AND id_user = ?");
     $stmt->bind_param("ii", $id_task, $id_user);
     $stmt->execute();
@@ -33,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress'])) {
     }
 }
 
-// Ambil tugas yang ditugaskan ke user ini
 $stmt = $conn->prepare("
     SELECT 
         t.id_task,
@@ -42,6 +39,7 @@ $stmt = $conn->prepare("
         t.deadline_task, 
         t.status, 
         t.progress,
+        t.file, 
         p.nama_project
     FROM task_assignments ta
     JOIN tasks t ON ta.id_task = t.id_task
@@ -64,9 +62,13 @@ $result = $stmt->get_result();
 
 <body class="p-8">
     <h1 class="text-xl font-bold mb-4">Tugas Saya</h1>
-    <a href="./index.php" class="text-blue-600 hover:underline mb-4 inline-block">← Kembali ke Dashboard</a>
+    <a
+        href="../anggota.php"
+        class="my-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+        ← Kembali ke Dashboard
+    </a>
 
-    <div class="space-y-4">
+    <div class="space-y-4 mt-4">
         <?php while ($row = $result->fetch_assoc()): ?>
             <div class="p-4 border rounded-lg shadow">
                 <h2 class="font-semibold text-lg"><?= htmlspecialchars($row['judul_task']) ?> (<?= htmlspecialchars($row['nama_project']) ?>)</h2>
@@ -77,7 +79,19 @@ $result = $stmt->get_result();
                     <div class="bg-blue-600 h-2 rounded-full" style="width: <?= (int)$row['progress'] ?>%"></div>
                 </div>
                 <p class="text-sm mt-1">Progress: <?= $row['progress'] ?>%</p>
-                <button onclick="openModal(<?= $row['id_task'] ?>, <?= $row['progress'] ?>)" class="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">Update Progress</button>
+                <div class="flex gap-6">
+                    <button
+                        onclick="openModal(<?= $row['id_task'] ?>, <?= $row['progress'] ?>)"
+                        class="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+                        Update Progress
+                    </button>
+                    <a
+                        href="./../../uploads/<?= htmlspecialchars($row['file']) ?>"
+                        target="_blank"
+                        class="mt-2 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700">
+                        Lihat File
+                    </a>
+                </div>
             </div>
         <?php endwhile; ?>
     </div>
